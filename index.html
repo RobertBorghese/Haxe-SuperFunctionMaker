@@ -2,8 +2,128 @@
 <html>
 <head>
 	<title>GENERATE HAXE STUFF</title>
+	<link rel="stylesheet" href="https://cdn.korzh.com/metroui/v4/css/metro-all.min.css">
+	<style type="text/css">
+		html, body {
+			padding: 0;
+			margin: 0;
+
+			background-color: #333;
+		}
+
+		.mainDiv {
+			width: 90vw;
+			height: 90vh;
+			padding: 30px;
+			display: flex;
+			flex-direction: row;
+			align-content: center;
+			align-items: stretch;
+			justify-content: center;
+			min-height: 100%;
+		}
+
+		.tabContent {
+			background-color: #ccc;
+		}
+	</style>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/an-old-hope.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/haxe.min.js"></script>
 </head>
 <body>
-	test me
+	<div class="mainDiv">
+		<div>
+			<ul data-role="tabs" data-tabs-type="group" data-expand="true">
+				<li><a href="#_recurse_file">Find All Files</a></li>
+				<li><a href="#_about">About</a></li>
+			</ul>
+			<div class="border bd-default no-border-top p-2 tabContent">
+				<div id="_recurse_file">
+					<input type="checkbox" id="import_types" onchange="refreshRecurseFile()">
+					<label for="import_types">Import Types?</label>
+					<br>
+					<br>
+					<label for="file_types">File types (separate with commas; ie `js` or `js, hx`)</label>
+					<br>
+					<input id="file_types" onkeyup="refreshRecurseFile()" style="width: 100%;"></input>
+					<br>
+					<br>
+					<div>
+						<pre><code id="recurse_file_output" class="language-haxe"></code></pre>
+					</div>
+				</div>
+				<div id="_about">
+					For myself so I can stop writing the same code over and over.<br>
+					Feel free to use as well.<br>
+					<br>
+					Yes, this site looks terrible cause not trying to waste a bunch of time on this.<br>
+					Please open an issue if there's a code block you'd like to see.<br>
+					<br>
+					<a href="https://github.com/RobertBorghese/Haxe-SuperFunctionMaker">https://github.com/RobertBorghese/Haxe-SuperFunctionMaker</a>				
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		function escapeHtml(s) {
+			return s.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&#039;");
+		}
+
+		function refreshRecurseFile(first = false) {
+			const importTypes = document.getElementById("import_types").checked;
+			let fileTypes = document.getElementById("file_types").value.split(/\s*,\s*/);
+
+			if(fileTypes.length === 1 && fileTypes[0].length === 0) {
+				fileTypes = [];
+			}
+
+			fileTypes = fileTypes.filter(f => f && f.length > 0);
+
+			const code = document.getElementById("recurse_file_output");
+
+			const FileSystem = !importTypes ? "sys.FileSystem" : "FileSystem";
+			const Path = !importTypes ? "haxe.io.Path" : "Path";
+
+			let addFile = "result.push(fullPath);";
+			if(fileTypes.length === 1) {
+				addFile = `if(${Path}.extension(fullPath) === "${fileTypes[0]}") {\n\t\t\t\tresult.push(fullPath);\n\t\t\t}`;
+			} else if(fileTypes.length > 1 && fileTypes.length <= 5) {
+				addFile = `final ext = ${Path}.extension(fullPath);\n\t\t\tif(\n\t\t\t\t${fileTypes.map(f => `ext === "${f}"`).join(" &&\n\t\t\t\t")}\n\t\t\t) {\n\t\t\t\tresult.push(fullPath);\n\t\t\t}`;
+			} else if(fileTypes.length > 5) {
+				addFile = `static final exts = [\n\t\t\t\t${fileTypes.map((f, i) => `${i % 5 === 4 ? "\n\t\t\t\t" : ""}"${f}"`).join(", ")}\n\t\t\t];\n\t\t\tif(exts.contains(${Path}.extension(fullPath)) {\n\t\t\t\tresult.push(fullPath);\n\t\t\t}`;
+			}
+
+			if(code) {
+				const c = 
+`function getAllFiles(dir: String): Array<String> {
+	final result = [];
+	for(file in ${FileSystem}.readDirectory(dir)) {
+		final fullPath = ${Path}.join([dir, file]);
+		if(${FileSystem}.isDirectory(fullPath)) {
+			for(f in getAllFiles(fullPath)) {
+				result.push(f);
+			}
+		} else {
+			${addFile}
+		}
+	}
+	return result;
+}`
+
+				code.innerHTML = escapeHtml(c);
+
+				if(!first) hljs.highlightAll();
+			}
+		}
+
+		refreshRecurseFile(true);
+	</script>
+	<script src="https://cdn.korzh.com/metroui/v4/js/metro.min.js"></script>
+	<script>hljs.highlightAll();</script>
 </body>
 </html>
