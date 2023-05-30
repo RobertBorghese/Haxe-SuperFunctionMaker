@@ -1,2 +1,9 @@
-# Haxe-SuperFunctionMaker
-Literally hands you Haxe code snippets cause BRO IM TIRED OF RE-WRITING THESE FUNCTIONS.
+# Welcome!!!
+https://robertborghese.github.io/Haxe-SuperFunctionMaker/
+
+# Features
+The types of Haxe functions that can be generated:
+ * Recursively find all files in the directory and sub-directories.
+
+# License
+PUBLIC DOMAAIIIINN BABIEEEEEEEEE
