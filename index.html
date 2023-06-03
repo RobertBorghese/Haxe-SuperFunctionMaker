@@ -98,9 +98,9 @@
 
 			let addFile = `result.push(${fileVar});`;
 			if(fileTypes.length === 1) {
-				addFile = `if(${Path}.extension(${fileVar}) === "${fileTypes[0]}") {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
+				addFile = `if(${Path}.extension(${fileVar}) == "${fileTypes[0]}") {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
 			} else if(fileTypes.length > 1 && fileTypes.length <= 5) {
-				addFile = `final ext = ${Path}.extension(${fileVar});\n\t\t\tif(\n\t\t\t\t${fileTypes.map(f => `ext === "${f}"`).join(" ||\n\t\t\t\t")}\n\t\t\t) {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
+				addFile = `final ext = ${Path}.extension(${fileVar});\n\t\t\tif(\n\t\t\t\t${fileTypes.map(f => `ext == "${f}"`).join(" ||\n\t\t\t\t")}\n\t\t\t) {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
 			} else if(fileTypes.length > 5) {
 				addFile = `static final exts = [\n\t\t\t\t${fileTypes.map((f, i) => `${i % 5 === 4 ? "\n\t\t\t\t" : ""}"${f}"`).join(", ")}\n\t\t\t];\n\t\t\tif(exts.contains(${Path}.extension(${fileVar})) {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
 			}
