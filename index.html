@@ -44,6 +44,10 @@
 					<label for="import_types">Import Types?</label>
 					<br>
 					<br>
+					<input type="checkbox" id="include_dir" onchange="refreshRecurseFile()">
+					<label for="include_dir">Include `dir` Content with Results</label>
+					<br>
+					<br>
 					<label for="file_types">File types (separate with commas; ie `js` or `js, hx`)</label>
 					<br>
 					<input id="file_types" onkeyup="refreshRecurseFile()" style="width: 100%;"></input>
@@ -76,6 +80,7 @@
 
 		function refreshRecurseFile(first = false) {
 			const importTypes = document.getElementById("import_types").checked;
+			const includeDir = document.getElementById("include_dir").checked;
 			let fileTypes = document.getElementById("file_types").value.split(/\s*,\s*/);
 
 			if(fileTypes.length === 1 && fileTypes[0].length === 0) {
@@ -89,23 +94,25 @@
 			const FileSystem = !importTypes ? "sys.FileSystem" : "FileSystem";
 			const Path = !importTypes ? "haxe.io.Path" : "Path";
 
-			let addFile = "result.push(fullPath);";
+			const fileVar = includeDir ? "relativePath" : "fullPath";
+
+			let addFile = `result.push(${fileVar});`;
 			if(fileTypes.length === 1) {
-				addFile = `if(${Path}.extension(fullPath) == "${fileTypes[0]}") {\n\t\t\t\tresult.push(fullPath);\n\t\t\t}`;
+				addFile = `if(${Path}.extension(${fileVar}) === "${fileTypes[0]}") {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
 			} else if(fileTypes.length > 1 && fileTypes.length <= 5) {
-				addFile = `final ext = ${Path}.extension(fullPath);\n\t\t\tif(\n\t\t\t\t${fileTypes.map(f => `ext == "${f}"`).join(" ||\n\t\t\t\t")}\n\t\t\t) {\n\t\t\t\tresult.push(fullPath);\n\t\t\t}`;
+				addFile = `final ext = ${Path}.extension(${fileVar});\n\t\t\tif(\n\t\t\t\t${fileTypes.map(f => `ext === "${f}"`).join(" ||\n\t\t\t\t")}\n\t\t\t) {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
 			} else if(fileTypes.length > 5) {
-				addFile = `static final exts = [\n\t\t\t\t${fileTypes.map((f, i) => `${i % 5 === 4 ? "\n\t\t\t\t" : ""}"${f}"`).join(", ")}\n\t\t\t];\n\t\t\tif(exts.contains(${Path}.extension(fullPath)) {\n\t\t\t\tresult.push(fullPath);\n\t\t\t}`;
+				addFile = `static final exts = [\n\t\t\t\t${fileTypes.map((f, i) => `${i % 5 === 4 ? "\n\t\t\t\t" : ""}"${f}"`).join(", ")}\n\t\t\t];\n\t\t\tif(exts.contains(${Path}.extension(${fileVar})) {\n\t\t\t\tresult.push(${fileVar});\n\t\t\t}`;
 			}
 
 			if(code) {
 				const c = 
-`function getAllFiles(dir: String): Array<String> {
+`function getAllFiles(dir: String${includeDir ? ", _relative: String = \"\"" : ""}): Array<String> {
 	final result = [];
 	for(file in ${FileSystem}.readDirectory(dir)) {
-		final fullPath = ${Path}.join([dir, file]);
+		final fullPath = ${Path}.join([dir, file]);${includeDir ? `\n\t\tfinal relativePath = ${Path}.join([_relative, file]);` : ""}
 		if(${FileSystem}.isDirectory(fullPath)) {
-			for(f in getAllFiles(fullPath)) {
+			for(f in getAllFiles(fullPath${includeDir ? ", " + Path + ".join([_relative, file])" : ""})) {
 				result.push(f);
 			}
 		} else {
