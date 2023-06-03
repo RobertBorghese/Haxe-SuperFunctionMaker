@@ -48,6 +48,10 @@
 					<label for="include_dir">Include `dir` Content with Results</label>
 					<br>
 					<br>
+					<input type="checkbox" id="include_ext" onchange="refreshRecurseFile()">
+					<label for="include_ext">Remove File Extension</label>
+					<br>
+					<br>
 					<label for="file_types">File types (separate with commas; ie `js` or `js, hx`)</label>
 					<br>
 					<input id="file_types" onkeyup="refreshRecurseFile()" style="width: 100%;"></input>
@@ -81,6 +85,7 @@
 		function refreshRecurseFile(first = false) {
 			const importTypes = document.getElementById("import_types").checked;
 			const includeDir = document.getElementById("include_dir").checked;
+			const includeExt = document.getElementById("include_ext").checked;
 			let fileTypes = document.getElementById("file_types").value.split(/\s*,\s*/);
 
 			if(fileTypes.length === 1 && fileTypes[0].length === 0) {
@@ -94,7 +99,10 @@
 			const FileSystem = !importTypes ? "sys.FileSystem" : "FileSystem";
 			const Path = !importTypes ? "haxe.io.Path" : "Path";
 
-			const fileVar = includeDir ? "relativePath" : "fullPath";
+			let fileVar = includeDir ? "relativePath" : "fullPath";
+			if(includeExt) {
+				fileVar = `Path.withoutExtension(${fileVar})`;
+			}
 
 			let addFile = `result.push(${fileVar});`;
 			if(fileTypes.length === 1) {
